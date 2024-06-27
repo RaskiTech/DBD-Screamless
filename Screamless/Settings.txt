@@ -1,0 +1,24 @@
+# Text after a hashtag is ignored
+# Keep the order of the settings the same
+
+1.0  # In game hud scale. Check your settings for this value. 100% => 1.0, 70% => 0.7 etc
+0    # (Virtual-Key code) Manual mute keybind, should be pressed at the time of hooking. Check a decimal value for your key at https://cherrytree.at/misc/vk.htm
+
+
+1    # Show debug console when program is running
+0    # VisualizeLookingPositions. Boolean, 0 or 1
+
+
+# It's not recommended to change the settings below unless you know what you are doing
+
+0.08 # KillerUIHookTreshold
+0.08 # CarryImageTreshold
+0.03 # ParticleEffectLeftTreshold
+0.03 # ParticleEffectRightTreshold
+
+5.00 # seconds, ApplicationSearchWaitTime
+0.75 # seconds, SearchAllSurvivorsWaitTime. 3 / 4, killer pickup time divided by survivor count
+0.05 # seconds, SeachForSurvivorHookingWaitTime
+0.50 # seconds, HookingWaitTime
+0.13 # seconds, OnHookingTabOutTime
+
