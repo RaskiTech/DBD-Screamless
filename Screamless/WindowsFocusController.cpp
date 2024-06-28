@@ -22,11 +22,14 @@ void FocusController::LoseFocus()
     HWND desktop = GetDesktopWindow();
     if (desktop)
     {
-        SetForegroundWindow(desktop);
+        SetLastError(0);
+        bool success = SetForegroundWindow(desktop);
+        if (!success)
+            LogErr("Couldn't set desktop to foreground window: ", GetLastErrorAsString());
     }
     else
     {
-        Log("Didn't get the desktop window");
+        LogErr("Didn't get the desktop window");
     }
 }
 

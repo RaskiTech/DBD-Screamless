@@ -13,35 +13,35 @@ void VolumeController::Initialize(const std::string& appName)
 
     mHr = CoInitialize(nullptr);
     if (FAILED(mHr)) {
-        Log("Failed to initialize COM library");
+        LogErr("Failed to initialize COM library");
         Uninitialize();
         return;
     }
 
     mHr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID*)&mDeviceEnumerator);
     if (FAILED(mHr)) {
-        Log("Failed to create device enumerator");
+        LogErr("Failed to create device enumerator");
 		Uninitialize();
         return;
     }
 
     mHr = mDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mDevice);
     if (FAILED(mHr)) {
-		Log("Failed to get default audio endpoint");
+		LogErr("Failed to get default audio endpoint");
         Uninitialize();
         return;
     }
 
     mHr = mDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_INPROC_SERVER, nullptr, (LPVOID*)&mAudioSessionManager);
     if (FAILED(mHr)) {
-        Log("Failed to get audio session manager interface");
+        LogErr("Failed to get audio session manager interface");
         Uninitialize();
         return;
     }
 
     mHr = mAudioSessionManager->GetSessionEnumerator(&mAudioSessionEnumerator);
     if (FAILED(mHr)) {
-		Log("Failed to get session enumerator");
+		LogErr("Failed to get session enumerator");
         Uninitialize();
         return;
     }
@@ -77,7 +77,7 @@ void VolumeController::Mute(bool mute)
     int sessionCount = 0;
     mHr = mAudioSessionEnumerator->GetCount(&sessionCount);
     if (FAILED(mHr)) {
-        Log("Failed to get session count");
+        LogErr("Failed to get session count");
         Uninitialize();
         return;
     }
@@ -86,7 +86,7 @@ void VolumeController::Mute(bool mute)
         IAudioSessionControl* pSessionControl = nullptr;
         mHr= mAudioSessionEnumerator->GetSession(i, &pSessionControl);
         if (FAILED(mHr)) {
-            Log("Failed to get session control");
+            LogErr("Failed to get session control");
             continue;
         }
 
@@ -107,7 +107,7 @@ void VolumeController::Mute(bool mute)
                 if (SUCCEEDED(mHr)) {
                     // Mute succeeded
                 } else {
-                    Log("Failed to mute application");
+                    LogErr("Failed to mute application");
                 }
                 pVolumeControl->Release();
             }

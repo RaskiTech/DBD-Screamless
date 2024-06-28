@@ -45,6 +45,9 @@ struct BoundingBox
 	int height = 100;
 };
 
+extern void ChangeToSTDColorRed();
+extern void ChangeToSTDColorDefault();
+
 extern bool shouldLog;
 template<typename... Args>
 void Log(Args... args)
@@ -54,6 +57,17 @@ void Log(Args... args)
 	std::ostringstream oss;
 	(oss << ... << args);
 	std::cout << oss.str() << std::endl;
+}
+template<typename... Args>
+void LogErr(Args... args)
+{
+	if (!shouldLog)
+		return;
+	std::ostringstream oss;
+	(oss << ... << args);
+	ChangeToSTDColorRed();
+	std::cout << oss.str() << std::endl;
+	ChangeToSTDColorDefault();
 }
 
 static AppSettings ReadAppSettingsFromFile(const std::string& path)

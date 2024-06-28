@@ -8,20 +8,33 @@
 
 bool shouldLog = true;
 
-int main() {
+
+// TODO:
+// Include troubleShooting page: check hud scale, enable console to see if any errors appear. If not detecting, check positions, report an issue w/video
+// Windowed fullscreen
+
+extern void ChildProcessFunction();
+
+
+int main(int argc, char *argv[]) {
+    if (argc > 1 && _stricmp(argv[1], "child") == 0) {
+        ChildProcessFunction();
+        return 0;
+    }
+
     AppSettings settings = ReadAppSettingsFromFile("Settings.txt");
 
     //Application app = Application(settings, "ApplicationFrameHost.exe", "Media Player");
     Application app = Application(settings, "DeadByDaylight-Win64-Shipping.exe");
 
-    app.FindApplication();
-
-    if (!settings.ShowConsole)
+    if (app.FindApplication())
     {
-        FreeConsole();
-        shouldLog = false;
+		if (!settings.ShowConsole)
+		{
+			FreeConsole();
+			shouldLog = false;
+		}
+
+		app.Run();
     }
-
-    app.Run();
-
 }

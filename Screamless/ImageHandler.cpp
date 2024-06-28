@@ -52,7 +52,7 @@ int ImageHandler::GetFreeImageHandle()
         index++;
     if (index == mImages.size())
     {
-        Log("Could not load image, image buffer full. Do you have an image leak? :D");
+        LogErr("Could not load image, image buffer full. Do you have an image leak? :D");
         return -1;
     }
     return index;
@@ -62,7 +62,7 @@ void ImageHandler::DeleteImage(int handle)
 {
     if (handle >= mImages.size() || !mImages[handle].ContainsImage())
     {
-        Log("DeleteImage was given an invalid handle");
+        LogErr("DeleteImage was given an invalid handle");
         return;
     }
     mImages[handle] = Image();
@@ -78,7 +78,7 @@ bool ImageHandler::ResizeImage(Image& img, int newWidth, int newHeight)
     std::vector<uint8_t> newData = std::vector<uint8_t>(newWidth * newHeight * 3);
     if (!base::ResampleImage24(img.buffer.data(), img.width, img.height, newData.data(), newWidth, newHeight, base::KernelTypeNearest))
     {
-        Log("Couldn't resize image");
+        LogErr("Couldn't resize image");
         return false;
     }
     img.buffer = newData;

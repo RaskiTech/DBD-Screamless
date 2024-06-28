@@ -4,6 +4,8 @@
 #include <iostream>
 #include <tlhelp32.h>
 #include <windows.h>
+#include <tchar.h>
+
 
 static DWORD tempCorrectPID;
 static BOOL CALLBACK EnumWindowsFindPID(HWND hwnd, LPARAM lParam) {
@@ -48,7 +50,7 @@ static DWORD FindPIDByName(const std::string& name)
     // Take a snapshot of all processes in the system
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE) {
-        Log("Failed to create snapshot");
+        LogErr("Failed to create snapshot");
         return 0;
     }
 
@@ -57,7 +59,7 @@ static DWORD FindPIDByName(const std::string& name)
 
     // Retrieve information about the first process
     if (!Process32First(hSnapshot, &pe32)) {
-        Log("Failed to retrieve first process");
+        LogErr("Failed to retrieve first process");
         CloseHandle(hSnapshot);
         return 0;
     }
@@ -73,6 +75,55 @@ static DWORD FindPIDByName(const std::string& name)
     CloseHandle(hSnapshot);
     return 0; // Process not found
 }
+
+static int LaunchSameProgramAsChildAndStartDebugging()
+{
+    // Get the path to the current executable
+    TCHAR szPath[MAX_PATH];
+    if (!GetModuleFileName(NULL, szPath, MAX_PATH))
+    {
+        LogErr("Failed to get current executable path. Error: ", GetLastError());
+        return 0;
+    }
+
+    // Prepare the command line for the new process
+    TCHAR szCommandLine[MAX_PATH];
+    _stprintf_s(szCommandLine, _T("\"%s\" child"), szPath);
+    
+    // Initialize structures for process creation
+    STARTUPINFO si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
+
+    // Create the new process
+    if (!CreateProcess(NULL, szCommandLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    {
+        LogErr("Failed to create process. Error: ", GetLastError());
+        return 0;
+    }
+
+    // Wait for the process to become available
+    WaitForInputIdle(pi.hProcess, INFINITE);
+
+    // Attach to the process for debugging
+    if (DebugActiveProcess(pi.dwProcessId))
+    {
+        Log("Debugging started successfully.");
+    }
+    else
+        LogErr("Failed to start debugging. Error: ", GetLastError());
+
+    // Close process and thread handles
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return (int)pi.dwProcessId;
+}
+static void StopChildProcess(int childProcessHandle)
+{
+    if (!DebugActiveProcessStop(childProcessHandle))
+        LogErr("Couldn't stop debugging. You may need to close the program window manually: ", GetLastError());
+}
+
+
 
 static HWND _tempCorrectHandle;
 static char _tempNeededWindowTitle[256];
@@ -123,4 +174,29 @@ static void PrintWindowHandles(const std::string& executableName)
 
     DWORD pid = FindPIDByName(executableName);
     EnumWindows(EnumWindowsProc, (LPARAM)pid);
+}
+
+//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+static std::string GetLastErrorAsString()
+{
+    //Get the error message ID, if any.
+    DWORD errorMessageID = ::GetLastError();
+    if(errorMessageID == 0) {
+        return "No information provided."; //No error message has been recorded
+    }
+    
+    LPSTR messageBuffer = nullptr;
+
+    //Ask Win32 to give us the string version of that message ID.
+    //The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    
+    //Copy the error message into a std::string.
+    std::string message(messageBuffer, size);
+    
+    //Free the Win32's string's buffer.
+    LocalFree(messageBuffer);
+            
+    return message;
 }

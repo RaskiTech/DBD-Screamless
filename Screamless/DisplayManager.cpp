@@ -18,7 +18,7 @@ void DisplayManager::Initialize(void* windowHandle)
     mWindowHandle = *(HWND*)&windowHandle;
     if (mWindowHandle == NULL || !IsWindowValid())
     {
-        Log("Provided null window handle");
+        LogErr("Provided null window handle");
         return;
     }
 
@@ -80,14 +80,14 @@ void DisplayManager::LoadImageFromHandle(BoundingBox boundingBox, Image& outImag
     HDC hdcMemDC = CreateCompatibleDC(usedImageHandle);
 
     if (!hdcMemDC) {
-        Log("CreateCompatibleDC has failed");
+        LogErr("CreateCompatibleDC has failed");
         return;
     }
 
     HBITMAP hBitmap = CreateCompatibleBitmap(usedImageHandle, boundingBox.width, boundingBox.height);
 
     if (!hBitmap) {
-        Log("CreateCompatibleBitmap has failed");
+        LogErr("CreateCompatibleBitmap has failed");
         DeleteDC(hdcMemDC);
         return;
     }
@@ -95,7 +95,7 @@ void DisplayManager::LoadImageFromHandle(BoundingBox boundingBox, Image& outImag
     SelectObject(hdcMemDC, hBitmap);
 
     if (!BitBlt(hdcMemDC, 0, 0, boundingBox.width, boundingBox.height, usedImageHandle, boundingBox.x, boundingBox.y, SRCCOPY)) {
-        Log("BitBlt has failed");
+        LogErr("BitBlt has failed");
 		DeleteObject(hBitmap);
         DeleteDC(hdcMemDC);
         return;
@@ -126,7 +126,7 @@ void DisplayManager::LoadImageFromHandle(BoundingBox boundingBox, Image& outImag
     outImage.height = boundingBox.height;
 
 	if (!GetDIBits(hdcMemDC, hBitmap, 0, boundingBox.height, paddedBuffer.data(), &bmi, DIB_RGB_COLORS)) {
-        Log("GetDIBits has failed for hBitmap");
+        LogErr("GetDIBits has failed for hBitmap");
         SelectObject(hdcMemDC, hOldBitmap);
 		DeleteObject(hBitmap);
         DeleteDC(hdcMemDC);
@@ -194,7 +194,7 @@ void DisplayManager::DrawImage(int x, int y, Image& image)
 	HBITMAP hBitmap = CreateDIBSection(deskDC, &bmi, DIB_RGB_COLORS, &pBits, NULL, 0);
 	if (hBitmap == NULL)
 	{
-		Log("CreateDIBSection has failed. ", GetLastError());
+		LogErr("CreateDIBSection has failed. ", GetLastError());
 		ReleaseDC(desktop, deskDC);
 		return;
 	}

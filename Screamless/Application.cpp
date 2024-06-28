@@ -5,7 +5,6 @@
 #include <iostream>
 #include <thread>
 
-
 bool Application::TryInitialize()
 {
     mWindowHandle = GetWindowHandle(mExecutableName, mAppName);
@@ -23,6 +22,27 @@ bool Application::TryInitialize()
 
     mDisplayManager = DisplayManager();
     mDisplayManager.Initialize(mWindowHandle);
+
+
+    /*
+    From microsoft.com
+	The system restricts which processes can set the foreground window. A process can set the foreground window by calling SetForegroundWindow only if:
+	All of the following conditions are true:
+		The calling process belongs to a desktop application, not a UWP app or a Windows Store app designed for Windows 8 or 8.1.
+		The foreground process has not disabled calls to SetForegroundWindow by a previous call to the LockSetForegroundWindow function.
+		The foreground lock time-out has expired (see SPI_GETFOREGROUNDLOCKTIMEOUT in SystemParametersInfo).
+		No menus are active.
+	Additionally, at least one of the following conditions is true:
+		The calling process is the foreground process.
+		The calling process was started by the foreground process.
+		There is currently no foreground window, and thus no foreground process.
+		The calling process received the last input event.
+		Either the foreground process or the calling process is being debugged.
+
+    So we start our own child process and start debugging it and thus gain access to all the windows in this system
+    */
+
+    mChildProcessID = LaunchSameProgramAsChildAndStartDebugging();
 
     if (mDisplayManager.GetWindowSize()[0] == 0)
     {
@@ -46,9 +66,9 @@ bool Application::TryInitialize()
     mFoundApplication = true;
 
     if (mAppName != "")
-		Log("Started Screamless on application ", mAppName);
+		Log("Started Screamless on application ", mAppName,        mSettings.VisualizeLookingPositions ? " with visualising looking positions." : ".", " Hud scale: ", mSettings.GameHUDScale);
     else 
-		Log("Started Screamless on application ", mExecutableName);
+		Log("Started Screamless on application ", mExecutableName, mSettings.VisualizeLookingPositions ? " with visualising looking positions." : ".", " Hud scale: ", mSettings.GameHUDScale);
 
     return true;
 }
@@ -148,9 +168,12 @@ Application::~Application()
 {
     mFocusController.Uninitialize();
     mDisplayManager.Uninitialize();
+
+    StopChildProcess(mChildProcessID);
+    mChildProcessID = 0;
 }
 
-void Application::FindApplication()
+bool Application::FindApplication()
 {
     int tries = 0;
     while (!mFoundApplication && tries < 30)
@@ -159,6 +182,7 @@ void Application::FindApplication()
         WaitSeconds(mSettings.ApplicationSearchWaitTime);
         tries++;
     }
+    return mFoundApplication;
 }
 
 void Application::Run()
@@ -379,11 +403,24 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
         mImageHandler.DeleteImage(screenImage);
 
 
+        // In order for them to get the save we check multiple times and only register if all of them succed
+        // This is to avoid false positives in the most critical moments
+        static int gotSaveResultsInRow = 0;
         if (carryDifference >= mSettings.CarryImageTreshold)
         {
-            // They got the save
-            Log("Got the save with certainty ", carryDifference);
-            return SurvivorState::FreeOrOnHook;
+            if (gotSaveResultsInRow > 1)
+            {
+                Log("Got the save with certainty ", carryDifference);
+                return SurvivorState::FreeOrOnHook;
+            }
+            else
+            {
+                gotSaveResultsInRow++;
+            }
+        }
+        else
+        {
+            gotSaveResultsInRow = 0;
         }
 
 
