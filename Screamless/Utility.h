@@ -77,7 +77,7 @@ static AppSettings ReadAppSettingsFromFile(const std::string& path)
 
 	if (!file.is_open())
 	{
-		std::cout << "Couldn't find settings file: " << path << std::endl;
+		LogErr("Couldn't find settings file: ", path);
 		return AppSettings();
 	}
 
@@ -100,7 +100,7 @@ static AppSettings ReadAppSettingsFromFile(const std::string& path)
 
 		if (sizeof(float) * settingCount >= sizeof(AppSettings))
 		{
-			std::cout << "Found more settings even after parsing all. First unparsed line: " << line << std::endl;
+			LogErr("Found more settings even after parsing all. First unparsed line: ", line);
 			break;
 		}
 
@@ -108,7 +108,7 @@ static AppSettings ReadAppSettingsFromFile(const std::string& path)
 		float floatValue;
 		iss >> floatValue;
 		if (iss.fail()) {
-			std::cerr << "Error reading settings: Failed to read value from line: " << line << std::endl;
+			LogErr("Error reading settings: Failed to read value from line: ", line);
 			continue;
 		}
 
