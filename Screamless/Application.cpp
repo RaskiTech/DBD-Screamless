@@ -363,6 +363,8 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
             mImageHandler.GetImage(mCarryImage), screenImage, ImageHandler::CompareGreenChannel | ImageHandler::CompareBlueChannel
         );
 
+        if (difference == -1)
+            LoadAndResizeImages();
 
         mImageHandler.DeleteImage(screenImage);
         if (difference < mSettings.CarryImageTreshold)
@@ -392,16 +394,6 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
     {
         // Check for hook or a save
         // The hook image is not used, instead we check for the carry image
-
-        Image& screenImage = mImageHandler.GetFreeImage();
-        BoundingBox box = GetSurvivorHudPosition(hudIndex);
-        mDisplayManager.LoadImageFromDesktopView(box, screenImage);
-        float carryDifference = mImageHandler.CalculateImageDifference(
-            mImageHandler.GetImage(mCarryImage), screenImage, ImageHandler::CompareBlueChannel | ImageHandler::CompareGreenChannel
-        );
-        mImageHandler.WriteImageToDisk("Textures/screen.png", screenImage);
-        mImageHandler.DeleteImage(screenImage);
-
 
         // In order for them to get the save we check multiple times and only register if all of them succed
         // This is to avoid false positives in the most critical moments

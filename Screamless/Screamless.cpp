@@ -12,6 +12,7 @@ bool shouldLog = true;
 // TODO:
 // Include troubleShooting page: check hud scale, enable console to see if any errors appear. If not detecting, check positions, report an issue w/video
 // Windowed fullscreen
+// Check against eyrie of crows
 
 extern void ChildProcessFunction();
 
