@@ -3,9 +3,9 @@ Screamess is an extention program for Dead By Daylight that removes survivors fr
 
 It works by looking at the UI of the game and tabbing out at a precise time when the killer is about to hook a survivor. This makes Dead By Daylight stop the screaming sound. You can also do this manually, but this program automates that for you. Here is an on/off example video: (disable mute)
 
-
 https://github.com/RaskiTech/DBD-Screamless/assets/51312660/72e588b8-7568-436c-91dc-88244cfe9ceb
 
+I'm experimenting with an update that would completely mute the whole scream, so look forward to that.
 
 # Limitations
 You have to be on windows to run this program. I might consider adding linux support later.
@@ -23,5 +23,5 @@ Likely, no. This interferes with the game less than applications like Reshade do
 Look for the releases tab and choose the latest release. Installation instructions are included in there.
 
 # Troubleshooting
-If you have any problems with the program, first check that your in-game hud scale is set correctly in the Settings.txt file. You should also check the program output by enabling console in Settings.txt. If everything is set up correctly, or the program throws weird errors you can't understand, open up an issue on the subject.
+If you have any problems with the program, first check that your in-game hud scale is set correctly in the Settings.txt file. You should also check the program output by enabling console in Settings.txt. If everything is set up correctly, or the program throws weird errors you don't understand, open up an issue on the subject.
 
