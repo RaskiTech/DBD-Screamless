@@ -11,9 +11,6 @@ bool Application::TryInitialize()
 
     if (!IsWindow(*(HWND*)&mWindowHandle))
     {
-        const char* name = mAppName == "" ? mExecutableName.c_str() : mAppName.c_str();
-
-        Log("Did not find window with name ", name);
         return false;
     }
 
@@ -22,27 +19,6 @@ bool Application::TryInitialize()
 
     mDisplayManager = DisplayManager();
     mDisplayManager.Initialize(mWindowHandle);
-
-
-    /*
-    From microsoft.com
-	The system restricts which processes can set the foreground window. A process can set the foreground window by calling SetForegroundWindow only if:
-	All of the following conditions are true:
-		The calling process belongs to a desktop application, not a UWP app or a Windows Store app designed for Windows 8 or 8.1.
-		The foreground process has not disabled calls to SetForegroundWindow by a previous call to the LockSetForegroundWindow function.
-		The foreground lock time-out has expired (see SPI_GETFOREGROUNDLOCKTIMEOUT in SystemParametersInfo).
-		No menus are active.
-	Additionally, at least one of the following conditions is true:
-		The calling process is the foreground process.
-		The calling process was started by the foreground process.
-		There is currently no foreground window, and thus no foreground process.
-		The calling process received the last input event.
-		Either the foreground process or the calling process is being debugged.
-
-    So we start our own child process and start debugging it and thus gain access to all the windows in this system
-    */
-
-    mChildProcessID = LaunchSameProgramAsChildAndStartDebugging();
 
     if (mDisplayManager.GetWindowSize()[0] == 0)
     {
@@ -168,17 +144,20 @@ Application::~Application()
 {
     mFocusController.Uninitialize();
     mDisplayManager.Uninitialize();
-
-    StopChildProcess(mChildProcessID);
-    mChildProcessID = 0;
 }
 
 bool Application::FindApplication()
 {
     int tries = 0;
-    while (!mFoundApplication && tries < 30)
+    while (tries < 30)
     {
+        const char* name = mAppName == "" ? mExecutableName.c_str() : mAppName.c_str();
+        Log("Finding application ", name);
+
         mFoundApplication = TryInitialize();
+        if (mFoundApplication)
+            break;
+
         WaitSeconds(mSettings.ApplicationSearchWaitTime);
         tries++;
     }

@@ -152,10 +152,17 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="DisplayManager.h" />
     <ClInclude Include="ImageHandler.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Utility.h" />
     <ClInclude Include="VolumeController.h" />
     <ClInclude Include="WindowsFocusController.h" />
     <ClInclude Include="WindowsUtility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Screamless.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

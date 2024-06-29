@@ -47,7 +47,6 @@ private:
 	std::string mAppName; // The name of the app as it shows in taskbar
 	std::string mExecutableName; // The process name found in task manager when clicking go to details on the process
 	void* mWindowHandle = nullptr;
-	uint32_t mChildProcessID = 0;
 	bool mFoundApplication = false;
 
 	int mCarryImage = -1;
