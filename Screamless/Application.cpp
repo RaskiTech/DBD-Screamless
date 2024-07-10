@@ -55,6 +55,7 @@ bool Application::LoadAndResizeImages()
 
     success &= LoadAndResizeImage(&mCarryImage, "Textures/CarryDark.png", GetSurvivorHudPosition(0));
     success &= LoadAndResizeImage(&mHookImage, "Textures/Hook.png", GetKillerUIHookPosition());
+    success &= LoadAndResizeImage(&mProgressBarImage, "Textures/ProgressBar.png", GetProgressBarPosition());
     auto [left, right] = GetSurvivorEffectParticlePositions(0);
     success &= LoadAndResizeImage(&mBloodEffectImageLeft, "Textures/ParticleEffectLeft.png", left);
     success &= LoadAndResizeImage(&mBloodEffectImageRight, "Textures/ParticleEffectRight.png", right);
@@ -88,7 +89,7 @@ void Application::DrawImportantScreenPositions()
     {
         Image& img = mImageHandler.GetFreeImage();
         mDisplayManager.LoadImageFromDesktopView(loadLocation, img);
-        mImageHandler.ResizeImage(img, 500, 500);
+        mImageHandler.ResizeImage(img, 500, 500 * img.height / img.width);
         mDisplayManager.DrawImage((mDisplayManager.GetWindowSize()[0] - img.width) / 2, (mDisplayManager.GetWindowSize()[1] - img.height) / 2, img);
         mImageHandler.DeleteImage(img);
 
@@ -100,12 +101,12 @@ void Application::DrawImportantScreenPositions()
     {
 		Image& img = mImageHandler.GetFreeImage();
 		mDisplayManager.LoadImageFromDesktopView(loadLocation, img);
-		std::cout << "Difference: " << mImageHandler.CalculateImageDifference(img, mImageHandler.GetImage(correctImage), mImageHandler.CompareBlueChannel | mImageHandler.CompareGreenChannel) << std::endl;
+		std::cout << "Middle screen graphic difference: " << mImageHandler.CalculateImageDifference(img, mImageHandler.GetImage(correctImage), ImageHandler::CompareBlueChannel | ImageHandler::CompareGreenChannel) << std::endl;
 		mImageHandler.DeleteImage(img);
 
 		auto [x, y] = mDisplayManager.GetWindowSize();
 		Image& carryBig = mImageHandler.LoadImageFromDisk(pathToBigImg);
-		mImageHandler.ResizeImage(carryBig, 500, 500);
+		mImageHandler.ResizeImage(carryBig, 500, 500 * img.height / img.width);
 		mDisplayManager.DrawImage((x - carryBig.width) / 2, (y - carryBig.height) / 2, carryBig);
 		mImageHandler.DeleteImage(carryBig);
     }
@@ -178,17 +179,9 @@ void Application::Run()
             if (mSettings.VisualizeLookingPositions)
             {
 				DrawImportantScreenPositions();
-				WaitSeconds(0.03f);
+				WaitSeconds(0.1f);
 
-                BoundingBox box = GetSurvivorHudPosition(0);
-                if (box.width != mImageHandler.GetImage(mCarryImage).width)
-                {
-                    mImageHandler.ResizeImage(mCarryImage, box.width, box.height);
-                    auto [left, right] = GetSurvivorEffectParticlePositions(0);
-                    mImageHandler.ResizeImage(mBloodEffectImageLeft, left.width, left.height);
-                    mImageHandler.ResizeImage(mBloodEffectImageRight, right.width, right.height);
-                }
-
+                LoadAndResizeImages();
                 continue;
             }
 
@@ -219,12 +212,13 @@ void Application::Run()
 BoundingBox Application::GetSurvivorHudPosition(int hudIndex)
 {
     auto [width, height] = mDisplayManager.GetWindowSize();
+    auto [xOffset, yOffset] = mDisplayManager.GetWindowSmallOffset();
 
     // All of these values are hard coded by looking at the screen
 
     return BoundingBox(
-    /* x */         (int)(width * 0.05635f * mSettings.GameHUDScale),
-    /* y */	        (int)(height * (1 - (1 - (0.648f - hudIndex * 0.0814f)) * mSettings.GameHUDScale)),
+    /* x */         (int)(width * 0.05635f * mSettings.GameHUDScale) + xOffset,
+    /* y */	        (int)(height * (1 - (1 - (0.648f - hudIndex * 0.0814f)) * mSettings.GameHUDScale)) + yOffset,
     /* Width */	    (int)(width * 0.0225f * mSettings.GameHUDScale),
     /* Height */	(int)(width * 0.0225f * mSettings.GameHUDScale)
     );
@@ -255,13 +249,31 @@ std::pair<BoundingBox, BoundingBox> Application::GetSurvivorEffectParticlePositi
     );
 }
 
+BoundingBox Application::GetProgressBarPosition()
+{
+    auto [width, height] = mDisplayManager.GetWindowSize();
+    auto [xOffset, yOffset] = mDisplayManager.GetWindowSmallOffset();
+
+    const int imageDimensionX = 174;
+    const int imageDimensionY = 16;
+    const float scale = 0.0005f;
+
+    return BoundingBox(
+    /* x */         (int)(width  * (0.5f - 0.064f * mSettings.GameHUDScale)) + xOffset,
+    /* y */	        (int)(height * (1 - 0.2f * mSettings.GameHUDScale)) + yOffset,
+    /* Width */	    (int)(width * scale * imageDimensionX * mSettings.GameHUDScale),
+    /* Height */	(int)(width * scale * imageDimensionY * mSettings.GameHUDScale)
+    );
+}
+
 BoundingBox Application::GetKillerUIHookPosition()
 {
     auto [width, height] = mDisplayManager.GetWindowSize();
+    auto [xOffset, yOffset] = mDisplayManager.GetWindowSmallOffset();
 
     return BoundingBox(
-    /* x */         (int)(width * 0.0559f * mSettings.GameHUDScale),
-    /* y */	        (int)(height * (1 - (1 - 0.748f) * mSettings.GameHUDScale)),
+    /* x */         (int)(width * 0.0559f * mSettings.GameHUDScale) + xOffset,
+    /* y */	        (int)(height * (1 - (1 - 0.748f) * mSettings.GameHUDScale)) + yOffset,
     /* Width */	    (int)(width * 0.0213f * mSettings.GameHUDScale),
     /* Height */	(int)(width * 0.0213f * mSettings.GameHUDScale)
     );
@@ -324,9 +336,6 @@ void Application::MuteScreamNow()
 	mFocusController.TakeFocus();
 }
 
-static float maxLeft = 0;
-static float maxRight = 0;
-static float maxCarry = 0;
 Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, SurvivorState currentState)
 {
     switch (currentState)
@@ -341,11 +350,13 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
         float difference = mImageHandler.CalculateImageDifference(
             mImageHandler.GetImage(mCarryImage), screenImage, ImageHandler::CompareGreenChannel | ImageHandler::CompareBlueChannel
         );
+        mImageHandler.DeleteImage(screenImage);
 
         if (difference == -1)
             LoadAndResizeImages();
 
-        mImageHandler.DeleteImage(screenImage);
+		static float maxCarry = 0;
+
         if (difference < mSettings.CarryImageTreshold)
         {
             if (difference == -1)
@@ -355,8 +366,6 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
             }
 
             Log("Started carrying with certainty (lower, more certain) ", difference);
-            maxLeft = 0;
-            maxRight = 0;
             maxCarry = 0;
             return SurvivorState::Carrying;
         }
@@ -382,7 +391,7 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
         );
         mImageHandler.DeleteImage(screenImage);
 
-        // In order for them to get the save we check multiple times and only register if all of them succed
+        // In order for them to get the save we check multiple times and only register if all of them succeed
         // This is to avoid false positives in the most critical moments
         static int gotSaveResultsInRow = 0;
         if (carryDifference >= mSettings.CarryImageTreshold)
@@ -402,41 +411,32 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
             gotSaveResultsInRow = 0;
         }
 
-
-        auto [left, right] = GetSurvivorEffectParticlePositions(hudIndex);
-        if (carryDifference == -1)
-        {
+        BoundingBox progressBox = GetProgressBarPosition();
+		if (carryDifference == -1)
+		{
 			mImageHandler.ResizeImage(mCarryImage, box.width, box.height);
-			mImageHandler.ResizeImage(mBloodEffectImageLeft, left.width, left.height);
-			mImageHandler.ResizeImage(mBloodEffectImageRight, right.width, right.height);
-            return SurvivorState::Carrying;
+            mImageHandler.ResizeImage(mProgressBarImage, progressBox.width, progressBox.height);
+			return SurvivorState::Carrying;
+		}
+
+        Image& freeImg = mImageHandler.GetFreeImage();
+        mDisplayManager.LoadImageFromDesktopView(progressBox, freeImg);
+        float progressDifference = mImageHandler.CalculateImageDifference(
+            mImageHandler.GetImage(mProgressBarImage), freeImg, ImageHandler::CompareBlueChannel | ImageHandler::CompareGreenChannel | ImageHandler::CompareRedChannel
+        );
+        mImageHandler.DeleteImage(freeImg);
+
+        static float minDiff = 1.0f;
+        if (progressDifference < minDiff)
+        {
+            minDiff = progressDifference;
+            Log("ProgressBarDifference: ", minDiff);
         }
 
-        mDisplayManager.LoadImageFromDesktopView(left, screenImage);
-        float leftDifference = mImageHandler.CalculateRedPrecense(mImageHandler.GetImage(mBloodEffectImageLeft), screenImage);
-        mImageHandler.DeleteImage(screenImage);
-        mDisplayManager.LoadImageFromDesktopView(right, screenImage);
-        float rightDifference = mImageHandler.CalculateRedPrecense(mImageHandler.GetImage(mBloodEffectImageRight), screenImage);
-        mImageHandler.DeleteImage(screenImage);
-        
-        if (leftDifference > maxLeft || rightDifference > maxRight)
+        if (progressDifference < mSettings.ProgressBarTreshold)
         {
-            maxLeft = max(maxLeft, leftDifference);
-            maxRight = max(maxRight, rightDifference);
-
-            Log("Red stains: ", maxLeft, " ", maxRight);
-        }
-        if (carryDifference > maxCarry)
-        {
-            maxCarry = carryDifference;
-			Log("Carry: ", maxCarry);
-        }
-
-        // If either one of them got under the treshold, we'll go through with it
-        // since something was probably just interfering with the other one
-        if (leftDifference > mSettings.ParticleEffectLeftTreshold || rightDifference > mSettings.ParticleEffectRightTreshold)
-        {
-            Log("Survivor hooked with certanty (higher, more certain) ", leftDifference, " ", rightDifference);
+            Log("Survivor hooked with certanty (lower, more certain) ", progressDifference);
+            minDiff = 1.0f;
             return SurvivorState::CurrentlyHooking;
         }
         else
@@ -454,6 +454,27 @@ Application::SurvivorState Application::UpdateSurvivorState(int hudIndex, Surviv
     }
 
     return SurvivorState::FreeOrOnHook;
+}
+
+bool Application::CheckForBloodParticleEffects(int hudIndex)
+{
+	auto [left, right] = GetSurvivorEffectParticlePositions(hudIndex);
+    if (left.width != mImageHandler.GetImage(mBloodEffectImageLeft).width)
+    {
+        LoadAndResizeImages();
+    }
+
+    Image& screenImage = mImageHandler.GetFreeImage();
+	mDisplayManager.LoadImageFromDesktopView(left, screenImage);
+	float leftDifference = mImageHandler.CalculateRedPrecense(mImageHandler.GetImage(mBloodEffectImageLeft), screenImage);
+	mImageHandler.DeleteImage(screenImage);
+	mDisplayManager.LoadImageFromDesktopView(right, screenImage);
+	float rightDifference = mImageHandler.CalculateRedPrecense(mImageHandler.GetImage(mBloodEffectImageRight), screenImage);
+	mImageHandler.DeleteImage(screenImage);
+	
+	// If either one of them got under the treshold, we'll go through with it
+	// since something was probably just interfering with the other one
+	return leftDifference > mSettings.ParticleEffectLeftTreshold || rightDifference > mSettings.ParticleEffectRightTreshold;
 }
 
 void Application::UpdateIsInKillerGame()
@@ -475,12 +496,12 @@ void Application::UpdateIsInKillerGame()
 	Image& img = mImageHandler.GetFreeImage();
 	mDisplayManager.LoadImageFromDesktopView(GetKillerUIHookPosition(), img);
 	float diff = mImageHandler.CalculateImageDifference(mImageHandler.GetImage(mHookImage), 
-		img, mImageHandler.CompareBlueChannel | mImageHandler.CompareGreenChannel);
+		img, ImageHandler::CompareBlueChannel | ImageHandler::CompareGreenChannel);
     if (diff == -1)
     {
         LoadAndResizeImages();
 		diff = mImageHandler.CalculateImageDifference(mImageHandler.GetImage(mHookImage), 
-			img, mImageHandler.CompareBlueChannel | mImageHandler.CompareGreenChannel);
+			img, ImageHandler::CompareBlueChannel | ImageHandler::CompareGreenChannel);
     }
 
 	mImageHandler.DeleteImage(img);

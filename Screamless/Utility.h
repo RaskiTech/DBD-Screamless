@@ -19,6 +19,7 @@ struct AppSettings
 	float CarryImageTreshold = 0.08f;
 	float ParticleEffectLeftTreshold = 0.03f;
 	float ParticleEffectRightTreshold = 0.03f;
+	float ProgressBarTreshold = 0.03f;
 
 	float ApplicationSearchWaitTime = 2000;
 	float SearchAllSurvivorsWaitTime = 3000 / 4;

@@ -25,6 +25,8 @@ public:
 	void DrawRect(BoundingBox box);
 	void DrawImage(int x, int y, Image& image);
 	std::array<int, 2> GetWindowSize();
+	std::array<int, 2> GetWindowOffset();
+	std::array<int, 2> GetWindowSmallOffset(); // Needed offset of a couple of pixels due to system scaling magic. (Maybe rounding)
 
 private:
 	void LoadImageFromHandle(BoundingBox DesktopBoundingBox, Image& outImage, HDC usedWindowDC);

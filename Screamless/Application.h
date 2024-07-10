@@ -30,6 +30,7 @@ public:
 
 	void DoSurvivorStateChecks();
 	SurvivorState UpdateSurvivorState(int hudIndex, SurvivorState currentState);
+	bool CheckForBloodParticleEffects(int hudIndex);
 	void UpdateIsInKillerGame();
 	void MuteScreamNow();
 	inline void WaitMilliseconds(int milliseconds) { std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds)); }
@@ -39,6 +40,7 @@ public:
 	void DrawImportantScreenPositions();
 	BoundingBox GetSurvivorHudPosition(int hudIndex);
 	std::pair<BoundingBox, BoundingBox> GetSurvivorEffectParticlePositions(int hudIndex);
+	BoundingBox GetProgressBarPosition();
 	BoundingBox GetKillerUIHookPosition();
 
 
@@ -53,6 +55,7 @@ private:
 	int mHookImage = -1;
 	int mBloodEffectImageLeft = -1;
 	int mBloodEffectImageRight = -1;
+	int mProgressBarImage = -1;
 
 	bool mInKillerGame = false;
 	int mCarryIndex = -1;

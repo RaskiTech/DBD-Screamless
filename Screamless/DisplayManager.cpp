@@ -226,6 +226,18 @@ std::array<int, 2> DisplayManager::GetWindowSize()
     return std::array<int, 2>{(int)((rect.right - rect.left) * mWindowScaleSetting), (int)((rect.bottom - rect.top) * mWindowScaleSetting)};
 }
 
+std::array<int, 2> DisplayManager::GetWindowOffset()
+{
+    RECT rect;
+    GetClientRect(mWindowHandle, &rect);
+    return std::array<int, 2>{(int)(rect.left * mWindowScaleSetting), (int)(rect.top * mWindowScaleSetting)};
+}
+
+std::array<int, 2> DisplayManager::GetWindowSmallOffset()
+{
+    return { (int)((mWindowScaleSetting - 1.0f) * 8), (int)((mWindowScaleSetting - 1.0f) * 8) };
+}
+
 void DisplayManager::ConvertScreenToWindowSpace(int* x, int* y)
 {
 	POINT pos;
